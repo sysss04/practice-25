@@ -1,0 +1,47 @@
+from PIL import Image
+import os
+
+def merge_images_simple():
+    print("cклейка изображений ")
+    image1_path = input("путь к изображению1: ").strip()
+    image2_path = input("путь к изображению2: ").strip()
+    
+    if not all([os.path.exists(image1_path), os.path.exists(image2_path)]):
+        print("Ошибка: один или оба файла не найдены!")
+        return
+    
+    try:
+        image1 = Image.open(image1_path)
+        image2 = Image.open(image2_path)
+        
+        if image1.mode != 'RGB':
+            image1 = image1.convert('RGB')
+        if image2.mode != 'RGB':
+            image2 = image2.convert('RGB')
+        
+        width1, height1 = image1.size
+        width2, height2 = image2.size
+        
+        total_width = width1 + width2
+        max_height = max(height1, height2)
+        
+        new_image = Image.new('RGB', (total_width, max_height))
+        
+        new_image.paste(image1, (0, 0))
+        new_image.paste(image2, (width1, 0))
+        
+        directory = os.path.dirname(image1_path)
+        original_name = os.path.basename(image1_path)
+        name, ext = os.path.splitext(original_name)
+        output_path = os.path.join(directory, f"{name}_merged{ext}")
+        
+        new_image.save(output_path)
+        
+        print("изобраение склеено ")
+        print("результат сохранен в: {output_path}")
+        
+    except Exception as e:
+        print("ошибка: {e}")
+
+if __name__ == "__main__":
+    merge_images_simple()
