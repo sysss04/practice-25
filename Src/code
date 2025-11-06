@@ -1,7 +1,7 @@
 from PIL import Image
 import os
 
-print("программа для изменения картинок")
+print("программа для изменения картинок ")
 print()
 
 print("Что будем делать")
