@@ -1,1 +1,95 @@
+from PIL import Image
+import os
 
+print("ПРОГРАММА ДЛЯ ИЗМЕНЕНИЯ РАЗМЕРА КАРТИНОК")
+print()
+
+print("Что будем делать?")
+print("1 - Уменьшить картинку")
+print("2 - Увеличить картинку") 
+print("3 - Сделать конкретный размер")
+print()
+
+choice = input("Выбери цифру (1, 2 или 3): ")
+
+
+file_path = input("Введите путь к картинке: ")
+
+if not os.path.exists(file_path):
+    print("Ой! Такого файла нет! Проверь путь.")
+    exit()
+
+try:
+    img = Image.open(Image.jpg)
+    print(f"Отлично! Картинка открыта. Размер: {img.size[1]}x{img.size[1]}")
+except:
+    print("Не получилось открыть картинку. Может, это не картинка?")
+    exit()
+
+
+if choice == "1":
+    percent = input("На сколько процентов уменьшить? (например, 50): ")
+    try:
+        percent = float(percent)
+        if percent <= 0 or percent >= 100:
+            print("Процент должен быть от 1 до 99!")
+            exit()
+    except:
+        print("Нужно ввести число!")
+        exit()
+
+    new_width = int(img.size[0] * percent / 100)
+    new_height = int(img.size[1] * percent / 100)
+    
+    print(f"Новый размер будет: {new_width}x{new_height}")
+    
+elif choice == "2":
+    percent = input("На сколько процентов увеличить? (например, 150): ")
+    try:
+        percent = float(percent)
+        if percent <= 100:
+            print("Для увеличения процент должен быть больше 100!")
+            exit()
+    except:
+        print("Нужно ввести число!")
+        exit()
+ 
+    new_width = int(img.size[0] * percent / 100)
+    new_height = int(img.size[1] * percent / 100)
+    
+    print(f"Новый размер будет: {new_width}x{new_height}")
+
+elif choice == "3":
+    width = input("Введите новую ширину: ")
+    height = input("Введите новую высоту: ")
+    
+    try:
+        new_width = int(width)
+        new_height = int(height)
+        if new_width <= 0 or new_height <= 0:
+            print("Размеры должны быть больше нуля!")
+            exit()
+    except:
+        print("Нужно ввести числа!")
+        exit()
+
+else:
+    print("Не понял твой выбор. Запусти программу снова.")
+    exit()
+
+output_path = input("Куда сохранить результат? (например: result.jpg): ")
+
+try:
+    new_img = img.resize((new_width, new_height))
+    new_img.save(output_path)
+    
+    print(" Ура! Получилось!")
+    print(f" Файл сохранен как: {output_path}")
+    print(f" Старый размер: {img.size[0]}x{img.size[1]}")
+    print(f" Новый размер: {new_width}x{new_height}")
+    
+except Exception as e:
+    print(f" Ой, что-то пошло не так: {e}")
+
+print()
+print("Спасибо за использование программы! ")
