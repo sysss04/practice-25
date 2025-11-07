@@ -1,94 +1,137 @@
+import sys
+from PyQt5.QtWidgets import (
+    QApplication,      # Главное приложение 
+    QMainWindow,       # oсновное окно 
+    QVBoxLayout,       # вертикальное расположение 
+    QHBoxLayout,       # Горизонтальное расположение 
+    QPushButton,       # Кнопки 
+    QLabel,            # Текст и изображения 
+    QFileDialog,       # Диалог выбора файлов 
+    QSpinBox,          #Поле для чисел 
+    QWidget,           #Базовый виджет 
+    QMessageBox        #Всплывающие окна 
+)
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt
 from PIL import Image
-import os
 
-print("программа для изменения картинок ")
-print()
-
-print("Что будем делать")
-print("1 -уменьшить картинку")
-print("2 -увеличить картинку") 
-print("3-сделать конкретный размер")
-print()
-
-choice = input("Выбери цифру (1,2,3): ")
-
-
-file_path = input("Введите путь к картинке: ")
-
-if not os.path.exists(file_path):
-    print("проверь путь.")
-    exit()
-
-try:
-    img = Image.open(Image.png)
-    print("Картинка открыта Размер: {img.size[1]}x{img.size[1]}")
-except:
-    print("Не получилось открыть")
-    exit()
-
-
-if choice == "1":
-    percent = input("На сколько % уменьшить (например, 50): ")
-    try:
-        percent = float(percent)
-        if percent <= 0 or percent >= 100:
-            print("Процент должен быть от 1 до 99")
-            exit()
-    except:
-        print("Нужно ввести число")
-        exit()
-
-    new_width = int(img.size[0] * percent / 100)
-    new_height = int(img.size[1] * percent / 100)
+class ImageResizer(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+        self.image_path = None
+        
+    def initUI(self):
+        self.setWindowTitle('изменение размера')
+        self.setGeometry(100, 100, 600, 500)
+       
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout()
+        
+        self.load_btn = QPushButton('Загрузить изображение')
+        self.load_btn.clicked.connect(self.load_image)
+        layout.addWidget(self.load_btn)
+        
+        self.image_label = QLabel('не загружено')
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.image_label.setStyleSheet('border: 1px solid gray; min-height: 200px;')
+        layout.addWidget(self.image_label)
+        
+        size_layout = QHBoxLayout()
+        
+        size_layout.addWidget(QLabel('ширина:'))
+        self.width_spin = QSpinBox()
+        self.width_spin.setRange(1, 5000)
+        self.width_spin.setValue(800)
+        size_layout.addWidget(self.width_spin)
+        
+        size_layout.addWidget(QLabel('высота:'))
+        self.height_spin = QSpinBox()
+        self.height_spin.setRange(1, 5000)
+        self.height_spin.setValue(600)
+        size_layout.addWidget(self.height_spin)
+        
+        layout.addLayout(size_layout)
+        
+        self.resize_btn = QPushButton('изменить размер')
+        self.resize_btn.clicked.connect(self.resize_image)
+        self.resize_btn.setEnabled(False)
+        layout.addWidget(self.resize_btn)
+       
+        self.save_btn = QPushButton('сохранить изображение')
+        self.save_btn.clicked.connect(self.save_image)
+        self.save_btn.setEnabled(False)
+        layout.addWidget(self.save_btn)
+        
+        central_widget.setLayout(layout)
     
-    print("Новый размер будет: {new_width}x{new_height}")
+    def load_image(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, 
+            'выберите изображение', 
+            '', 
+            'Images (*.png *.jpg *.jpeg *.bmp *.gif)'
+        )
+        
+        if file_path:
+            self.image_path = file_path
+            pixmap = QPixmap(file_path)
+            scaled_pixmap = pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.image_label.setPixmap(scaled_pixmap)
+            image = Image.open(file_path)
+            self.width_spin.setValue(image.width)
+            self.height_spin.setValue(image.height)
+            
+            self.resize_btn.setEnabled(True)
+            self.save_btn.setEnabled(True)
     
-elif choice == "2":
-    percent = input("На сколько процентов увеличить?: ")
-    try:
-        percent = float(percent)
-        if percent <= 100:
-            print("для увеличения процент должен быть больше 100!")
-            exit()
-    except:
-        print("нужно ввести число")
-        exit()
- 
-    new_width = int(img.size[0] * percent / 100)
-    new_height = int(img.size[1] * percent / 100)
+    def resize_image(self):
+        if not self.image_path:
+            return
+            
+        try:
+            new_width = self.width_spin.value()
+            new_height = self.height_spin.value()
+            
+            image = Image.open(self.image_path)
+            resized_image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            
+            temp_path = "temp_resized_image.png"
+            resized_image.save(temp_path)
+            
+            pixmap = QPixmap(temp_path)
+            scaled_pixmap = pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.image_label.setPixmap(scaled_pixmap)
+            
+            self.resized_image = resized_image
+            
+            QMessageBox.information(self, 'Размер изменен')
+            
+        except Exception as e:
+            QMessageBox.critical(self,"не удаётся изменить размер ", {str(e)})
     
-    print("новый размер будет: {new_width}x{new_height}")
+    def save_image(self):
+        if not hasattr(self, 'resized_image'):
+            QMessageBox.warning(self,'Сначала измените размер ')
+            return
+            
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            'Сохранить изображение',
+            'resized_image.png',
+            'PNG Image (*.png);;JPEG Image (*.jpg);;All Files (*)'
+        )
+        
+        if file_path:
+            try:
+                self.resized_image.save(file_path)
+                QMessageBox.information(self,  'изображение сохранено: {file_path}')
+            except Exception as e:
+                QMessageBox.critical(self, 'щшибка', {str(e)})
 
-elif choice == "3":
-    width = input("Введите новую ширину: ")
-    height = input("Введите новую высоту: ")
-    
-    try:
-        new_width = int(width)
-        new_height = int(height)
-        if new_width <= 0 or new_height <= 0:
-            print("размеры должны быть больше нуля")
-            exit()
-    except:
-        print("нужно ввести числа!")
-        exit()
-
-else:
-    print("не понял твой выбор. Запусти программу снова.")
-    exit()
-
-output_path = input("куда сохранить результат): ")
-
-try:
-    new_img = img.resize((new_width, new_height))
-    new_img.save(output_path)
-    
-    print("получилось ")
-    print("файл сохранен как: {output_path}")
-    print("старый размер: {img.size[0]}x{img.size[1]}")
-    print("новый размер: {new_width}x{new_height}")
-    
-except Exception as e:
-    print("что-то не так: {e}")
-
-print()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = ImageResizer()
+    window.show()
+    sys.exit(app.exec_())
